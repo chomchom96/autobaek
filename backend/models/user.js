@@ -13,4 +13,4 @@ const userSchema = new Schema({
   solvedProblems: [{ type: Schema.Types.ObjectId, ref: "Problem" }],
 });
 
-export default userSchema;
+module.exports = mongoose.model('User', userSchema);
