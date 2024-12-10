@@ -41,6 +41,14 @@ class SolvedacService {
       },
     });
   }
+  // 문제 하나 정보 가져오기
+  async getProblemInfo(bojId) {
+    return axios.get(`https://solved.ac/api/v3/problem/show?problemId=`, {
+      params: {
+        query: `problemId=${bojId}`,
+      },
+    });
+  }
 }
 
 export default SolvedacService;
