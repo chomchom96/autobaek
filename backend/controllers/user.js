@@ -1,16 +1,17 @@
 const User = require("../models/user");
 const Problem = require("../models/problem");
-const { SolvedacService } = require("../services/solvedacService");
+const SolvedacService = require("../services/solvedacService");
 
 exports.searchUser = async (req, res, next) => {
-  const query = req.query;
-  const { count, items } = await SolvedacService.searchUsers(query);
-  if (count === 0) return [];
-  const searchResult = [];
-  for (let i = 0; i < Math.min(count, 10); i++) {
-    searchResult.push([items[i].handle, items[i].tier]);
-  }
   try {
+    const query = req.query;
+    const { count, items } = await SolvedacService.searchUsers(query);
+    console.log(count, items);
+    if (count === 0) return [];
+    const searchResult = [];
+    for (let i = 0; i < Math.min(count, 10); i++) {
+      searchResult.push([items[i].handle, items[i].tier]);
+    }
     res.status(201).json({
       searchResult: searchResult,
     });
@@ -70,7 +71,7 @@ exports.getUserInfo = async (req, res, next) => {
     // 프론트 작업하면서 병행할 예정
     try {
       res.status(201).json({
-        //
+        tagItems: tagItems,
       });
     } catch (err) {
       console.error(err);

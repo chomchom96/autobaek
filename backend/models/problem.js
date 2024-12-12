@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+const { Schema } = mongoose;
 
 const problemSchema = new Schema(
   {
@@ -29,26 +29,5 @@ const problemSchema = new Schema(
   { timestamps: true }
 );
 
-// problemSchema.statics.getTagStatistics = async function (levelRange) {
-//   return this.aggregate([
-//     {
-//       $match: {
-//         level: {
-//           $gte: levelRange.min,
-//           $lte: levelRange.max,
-//         },
-//       },
-//     },
-//     { $unwind: "$tags" },
-//     {
-//       $group: {
-//         _id: "$tags",
-//         averageSolved: { $avg: "$solved" },
-//         totalProblems: { $sum: 1 },
-//       },
-//     },
-//     { $sort: { averageSolved: -1 } },
-//   ]);
-// };
 
 module.exports = mongoose.model("Problem", problemSchema);

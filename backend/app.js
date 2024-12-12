@@ -1,7 +1,9 @@
 const express = require("express");
-const router = express.router();
 const mongoose = require("mongoose");
-const mongodbURI = import.meta.env.MONGODB_URI;
+require("dotenv").config();
+const mongodbURI = process.env.MONGODB_URI;
+const userRouter = require("./routes/user");
+const problemRouter = require("./routes/problem");
 
 const app = express();
 
@@ -20,14 +22,16 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
+app.use(userRouter);
+app.use(problemRouter);
+
 app.use((error, req, res, next) => {
-  console.log(error);
+  console.error(error);
   const status = error.statusCode || 500;
   const message = error.message;
   const data = error.data;
   res.status(status).json({ message: message, data: data });
 });
-
 
 mongoose
   .connect(mongodbURI)

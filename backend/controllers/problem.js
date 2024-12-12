@@ -1,4 +1,4 @@
-const User = requrie("../models/user");
+const User = require("../models/user");
 const Problem = require("../models/problem");
 const { SolvedacService } = require("../services/solvedacService");
 
