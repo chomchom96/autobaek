@@ -3,7 +3,11 @@ const { Schema } = mongoose;
 
 const userSchema = new Schema(
   {
-    avgLevel: {
+    id: {
+      type: String,
+      required: true,
+    },
+    level: {
       type: Number,
       required: true,
     },
@@ -14,7 +18,7 @@ const userSchema = new Schema(
     solvedProblems: [
       {
         problemId: {
-          type: Schema.Types.ObjectId,
+          type: mongoose.Schema.Types.ObjectId,
           ref: "Problem",
         },
         tried: {
@@ -81,10 +85,20 @@ userSchema.statics.getTagAverageByLevel = async function (level) {
   ]);
 };
 
+userSchema.pre("save", function (next) {
+  console.log("Pre-save validation:", {
+    id: this.id,
+    solvedProblemsCount: this.solvedProblems.length,
+    solvedCnt: this.solvedCnt,
+    level: this.level,
+  });
+  next();
+});
+
 // 리턴값
 // [{
 // tag: "dynamic-programming",
-// avgSolvedProblems: 5.2, 
+// avgSolvedProblems: 5.2,
 // avgTries: 2.3,
 // count: 15
 // },]

@@ -1,70 +1,81 @@
-const axios = require("axios");
+const axios = require("../util/axios");
 
 const SolvedacService = {
   async searchUsers(query) {
-    const response = await axios.get(
-      `https://solved.ac/api/v3/search/user?query=${query.query}`
-    );
-    return response.data;
-  },
-  // 푼 전체 문제 가져오가
-  async getUserProblemAll(handle) {
-    const response = await axios.get([
-      axios.get(`https://solved.ac/api/v3/search/problem`, {
-        params: {
-          query: `query=solved_by:${handle}`,
-        },
-      }),
-    ]);
-    return response.data;
-  },
-  // 푼 문제 태그별 누계 가져오기
-  async getUserProblemStats(handle) {
-    const response = await axios.get(
-      `https://solved.ac/api/v3/user/problem_tag_stats`,
-      {
-        params: {
-          query: `handle=${handle}`,
-          sort: "asc",
-        },
-      }
-    );
-    const { count, items } = response.data;
-
-    let tagRank = [];
-    for (let i = 0; i < 10; i++) {
-      let tag = items[i].tag.displayedNames[0].name;
-      tagRank.push([tag, items[i].solved]);
+    try {
+      const response = await axios.get(`https://solved.ac/api/v3/search/user`, {
+        params: { query }
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error searching users:", error.message);
+      throw error;
     }
-    return { count, items };
   },
-  // 태그별 문제 가져오기
-  async getProblemsByTag(tag) {
-    const response = await axios.get(
-      `https://solved.ac/api/v3/search/problem`,
-      {
+
+  async getUserProblemAll(handle) {
+    try {
+      const response = await axios.get(`https://solved.ac/api/v3/search/problem`, {
+        params: { query: `solved_by:${handle}` }
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching user problems:", error.message);
+      throw error;
+    }
+  },
+
+  async getUserProblemStats(handle) {
+    try {
+      const response = await axios.get(`https://solved.ac/api/v3/user/problem_tag_stats`, {
         params: {
-          query: `query=solvable:true+tag:${tag}`,
+          handle,
+          direction: "asc"
+        }
+      });
+      
+      const { count, items } = response.data;
+      let tagRank = [];
+      
+      for (let i = 0; i < Math.min(10, items.length); i++) {
+        let tag = items[i].tag.displayNames[0].name;
+        tagRank.push([tag, items[i].solved]);
+      }
+      
+      return { count, items, tagRank };
+    } catch (error) {
+      console.error("Error fetching user problem stats:", error.message);
+      throw error;
+    }
+  },
+
+  async getProblemsByTag(tag) {
+    try {
+      const response = await axios.get(`https://solved.ac/api/v3/search/problem`, {
+        params: {
+          query: `solvable:true+tag:${tag}`,
           page: 1,
           sort: "solved",
-          direction: "desc",
-        },
-      }
-    );
-    return response.data;
+          direction: "desc"
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching problems by tag:", error.message);
+      throw error;
+    }
   },
-  // 문제 하나 정보 가져오기
-  async getProblemInfo(bojId) {
-    const response = await axios.get(
-      `https://solved.ac/api/v3/problem/show?problemId=`,
-      {
-        params: {
-          query: `problemId=${bojId}`,
-        },
-      }
-    );
 
-    return response.data;
+  async getProblemInfo(bojId) {
+    try {
+      const response = await axios.get(`https://solved.ac/api/v3/problem/show`, {
+        params: { problemId: bojId }
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching problem info:", error.message);
+      throw error;
+    }
   },
 };
 

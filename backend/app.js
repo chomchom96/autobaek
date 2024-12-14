@@ -26,7 +26,7 @@ app.use(userRouter);
 app.use(problemRouter);
 
 app.use((error, req, res, next) => {
-  console.error(error);
+  // console.error(error);
   const status = error.statusCode || 500;
   const message = error.message;
   const data = error.data;

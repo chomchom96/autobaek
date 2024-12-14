@@ -4,9 +4,8 @@ const SolvedacService = require("../services/solvedacService");
 
 exports.searchUser = async (req, res, next) => {
   try {
-    const query = req.query;
+    const query = req.query.user;
     const { count, items } = await SolvedacService.searchUsers(query);
-    console.log(count, items);
     if (count === 0) return [];
     const searchResult = [];
     for (let i = 0; i < Math.min(count, 10); i++) {
@@ -16,66 +15,100 @@ exports.searchUser = async (req, res, next) => {
       searchResult: searchResult,
     });
   } catch (err) {
-    console.error(err);
     next(err);
   }
 };
-
 exports.getUserInfo = async (req, res, next) => {
-  const userId = req.id;
-  const level = req.level;
-  const { solvedCnt, totalItems } = SolvedacService.getUserProblemsAll(userId);
-  const { _, tagItems } = SolvedacService.getUserProblemStats(userId);
-  const solvedProblems = [];
-  for (let item of totalItems) {
-    let bojId = item.problemId;
-    let tried = item.tried;
-    let tags = [];
-    for (let tag of item.tags) {
-      tags.push(tag.key);
-    }
-    let problem = await Problem.findOne({ bojId: bojId });
+  const userId = req.query.id;
+  const level = parseInt(req.query.level);
 
-    if (!problem) {
-      try {
-        const result = await SolvedacService.getProblemInfo(bojId);
-        problem = await Problem.create({
-          bojId: bojId,
-          level: level,
-          averageTries: result.averageTries,
-          tags: tags,
-        });
-      } catch (error) {
-        console.error("Error fetching problem data", error);
-        next(err);
+  try {
+    const existingUser = await User.findOne({ id: userId });
+
+    if (!existingUser) {
+      const { count, items } = await SolvedacService.getUserProblemAll(userId);
+
+      const solvedProblems = [];
+
+      for (let item of items) {
+        let bojId = item.problemId;
+        let tried = item.tried || 0;
+
+        try {
+          let problem = await Problem.findOne({ bojId: bojId });
+
+          if (!problem) {
+            const result = await SolvedacService.getProblemInfo(bojId);
+
+            const problemTags = result.tags
+              ? result.tags
+                  .map((tag) =>
+                    tag.displayNames && tag.displayNames[0]
+                      ? tag.displayNames[0].name
+                      : null
+                  )
+                  .filter(Boolean)
+              : [];
+
+            problem = await Problem.create({
+              bojId: result.problemId,
+              title: result.titleKo,
+              level: result.level,
+              averageTries: result.averageTries,
+              tags: problemTags,
+            });
+          }
+
+          solvedProblems.push({
+            problemId: problem._id,
+            tried: tried,
+            averageTries: problem.averageTries || 0,
+            tags: problem.tags || [],
+          });
+        } catch (problemError) {
+          console.error(`Error processing problem ${bojId}:`, problemError);
+          continue;
+        }
       }
-    }
 
-    solvedProblems.push({
-      problemId: problem._id,
-      tried: tried,
-      averageTries: averageTries,
-      tags: tags,
-    });
-  }
-  const user = new User({
-    id: userId,
-    solvedProblesm: solvedProblems,
-    solvedCnt: solvedCnt,
-    level: level,
-  });
-  user.save().then((result) => {
-    // TODO :
-    // 페이지에 필요한 정보 반환하기
-    // 태그별 누계 정보를 시각화 + 티어 평균 대비 비교 (가능시)
-    // 프론트 작업하면서 병행할 예정
-    try {
-      res.status(201).json({
-        tagItems: tagItems,
+      const newUser = new User({
+        id: userId,
+        level: level || 0,
+        solvedCnt: count || solvedProblems.length,
+        solvedProblems: solvedProblems,
       });
-    } catch (err) {
-      console.error(err);
-      next(err);
+
+      try {
+        const savedUser = await newUser.save();
+
+        console.log("User created successfully:", {
+          userId: savedUser.id,
+          solvedProblemsCount: savedUser.solvedProblems.length,
+          level: savedUser.level,
+        });
+
+        return res.status(201).json(savedUser);
+      } catch (saveError) {
+        console.error("User save error:", {
+          message: saveError.message,
+          errors: saveError.errors,
+          name: saveError.name,
+        });
+
+        if (saveError.name === "ValidationError") {
+          return res.status(400).json({
+            message: "Validation Failed",
+            errors: Object.values(saveError.errors).map((err) => err.message),
+          });
+        }
+
+        next(saveError);
+      }
+    } else {
+      return res.status(200).json(existingUser);
     }
-  });
+  } catch (error) {
+    console.error("Overall user info fetch error:", error);
+    next(error);
+  }
 };
