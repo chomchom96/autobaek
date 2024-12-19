@@ -1,8 +1,8 @@
-import Home from "./pages/Home";
+import Router from "./routes";
 import "./App.css";
 
 function App() {
-  return <Home></Home>;
+  return <Router></Router>;
 }
 
 export default App;
