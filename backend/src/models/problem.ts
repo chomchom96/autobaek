@@ -1,7 +1,16 @@
-const mongoose = require("mongoose");
-const { Schema } = mongoose;
+import mongoose, { Schema } from "mongoose";
 
-const problemSchema = new Schema(
+export interface IProblem {
+  bojId: number;
+  level: number;
+  title: string;
+  tags: string[];
+  averageTries: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const problemSchema = new Schema<IProblem>(
   {
     bojId: {
       type: Number,
@@ -29,5 +38,6 @@ const problemSchema = new Schema(
   { timestamps: true }
 );
 
+const Problem = mongoose.model<IProblem>("Problem", problemSchema);
 
-module.exports = mongoose.model("Problem", problemSchema);
+export default Problem;

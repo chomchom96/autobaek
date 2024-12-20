@@ -1,7 +1,33 @@
-const mongoose = require("mongoose");
-const { Schema } = mongoose;
+import mongoose, { Document, Model, Schema } from "mongoose";
 
-const userSchema = new Schema(
+interface SolvedProblem {
+  problemId: mongoose.Types.ObjectId;
+  tried: number;
+  averageTries: number;
+  tags: string[];
+}
+
+interface TagStatistics {
+  tag: string;
+  avgSolvedProblems: number;
+  avgTries: number;
+  count: number;
+}
+
+export interface IUser {
+  id: string;
+  level: number;
+  solvedCnt: number;
+  solvedProblems: SolvedProblem[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface UserModel extends Model<IUser> {
+  getTagAverageByLevel(level: number): Promise<TagStatistics[]>;
+}
+
+const userSchema = new Schema<IUser>(
   {
     id: {
       type: String,
@@ -18,7 +44,7 @@ const userSchema = new Schema(
     solvedProblems: [
       {
         problemId: {
-          type: mongoose.Schema.Types.ObjectId,
+          type: Schema.Types.ObjectId,
           ref: "Problem",
         },
         tried: {
@@ -41,7 +67,9 @@ const userSchema = new Schema(
   { timestamps: true }
 );
 
-userSchema.statics.getTagAverageByLevel = async function (level) {
+userSchema.statics.getTagAverageByLevel = async function (
+  level: number
+): Promise<TagStatistics[]> {
   return this.aggregate([
     {
       $match: {
@@ -95,12 +123,6 @@ userSchema.pre("save", function (next) {
   next();
 });
 
-// 리턴값
-// [{
-// tag: "dynamic-programming",
-// avgSolvedProblems: 5.2,
-// avgTries: 2.3,
-// count: 15
-// },]
+const User = mongoose.model<IUser, UserModel>("User", userSchema);
 
-module.exports = mongoose.model("User", userSchema);
+export default User;
