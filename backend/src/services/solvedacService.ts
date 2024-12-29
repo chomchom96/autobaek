@@ -1,4 +1,4 @@
-import axios from "../util/axios";
+import axios from "../util/axios.js";
 
 interface UserSearchResponse {
   count: number;
@@ -16,6 +16,10 @@ interface UserProblemResponse {
 }
 
 interface UserProblemItem {
+  level: number;
+  averageTries: number;
+  tags: any;
+  titleKo: string;
   problemId: string;
   tried: number;
 }
@@ -67,12 +71,18 @@ const SolvedacService = {
     }
   },
 
-  async getUserProblemAll(handle: string): Promise<UserProblemResponse> {
+  async getUserProblemAll(
+    handle: string,
+    page: number
+  ): Promise<UserProblemResponse> {
     try {
       const response = await axios.get<UserProblemResponse>(
         `https://solved.ac/api/v3/search/problem`,
         {
-          params: { query: `solved_by:${handle}` },
+          params: {
+            query: `solved_by:${handle}`,
+            page: page,
+          },
         }
       );
       return response.data;

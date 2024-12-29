@@ -1,8 +1,8 @@
 import express, { Express, Request, Response, NextFunction } from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import userRouter from "./routes/user";
-import problemRouter from "./routes/problem";
+import userRouter from "./routes/user.js";
+import problemRouter from "./routes/problem.js";
 
 dotenv.config();
 

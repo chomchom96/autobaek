@@ -37,14 +37,14 @@ export const addLoggingInterceptors = (props: AxiosInterceptorProps) => {
     (requestConfig: AxiosRequestConfigWithMetadata) => {
       requestConfig.metadata = requestConfig.metadata || {};
       requestConfig.metadata.startTime = date;
-      console.group(
-        `🚀 Axios Request [${requestConfig.method?.toUpperCase()}]`
-      );
-      console.log("URL:", requestConfig.url);
-      console.log("Method:", requestConfig.method);
-      console.log("Params:", JSON.stringify(requestConfig.params || {}));
-      console.log("Headers:", Object.keys(requestConfig.headers || {}));
-      console.groupEnd();
+      // console.group(
+      //   `🚀 Axios Request [${requestConfig.method?.toUpperCase()}]`
+      // );
+      // console.log("URL:", requestConfig.url);
+      // console.log("Method:", requestConfig.method);
+      // console.log("Params:", JSON.stringify(requestConfig.params || {}));
+      // console.log("Headers:", Object.keys(requestConfig.headers || {}));
+      // console.groupEnd();
       return requestConfig; // 요청 구성 반환
     },
     (error) => {
@@ -57,11 +57,11 @@ export const addLoggingInterceptors = (props: AxiosInterceptorProps) => {
       const startTime = response.config.metadata?.startTime;
       const duration = date - (startTime || 0); // 요청 소요 시간 계산
 
-      console.group(`✅ Axios Response [${response.status}]`);
-      console.log("URL:", response.config.url);
-      console.log("Duration:", `${duration}ms`);
-      console.log("Data Length:", JSON.stringify(response.data || {}).length);
-      console.groupEnd();
+      // console.group(`✅ Axios Response [${response.status}]`);
+      // console.log("URL:", response.config.url);
+      // console.log("Duration:", `${duration}ms`);
+      // console.log("Data Length:", JSON.stringify(response.data || {}).length);
+      // console.groupEnd();
       return response; // 응답 반환
     },
     (error: AxiosErrorWithMetadata) => {

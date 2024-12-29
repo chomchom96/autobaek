@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import User from "../models/user";
-import Problem from "../models/problem";
-import { IUser } from "../models/user";
-import SolvedacService from "../services/solvedacService";
+import User from "../models/user.js";
+import Problem from "../models/problem.js";
+import { IUser } from "../models/user.js";
+import SolvedacService from "../services/solvedacService.js";
 
 interface SearchUserResponse {
   searchResult: [string, string][];
@@ -57,29 +57,36 @@ export class UserController {
 
       if (!existingUser) {
         const { count, items } = await SolvedacService.getUserProblemAll(
-          userId
+          userId,
+          1
         );
+        const totalPages = Math.ceil(count / 50);
+        // console.log("totalPages", totalPages);
         const solvedProblems: ProblemInfo[] = [];
 
-        for (const item of items) {
-          const bojId: string = item.problemId;
-          const tried: number = item.tried || 0;
+        for (let i = 1; i <= totalPages; i++) {
+          const { count, items } = await SolvedacService.getUserProblemAll(
+            userId,
+            i
+          );
+          for (const item of items) {
+            const bojId: string = item.problemId;
+            const tried: number = item.tried || 0;
 
-          try {
             let problem = await Problem.findOne({ bojId });
             if (!problem) {
-              const result = await SolvedacService.getProblemInfo(bojId);
-              const problemTags = result.tags
-                ? (result.tags
+              // const result = await SolvedacService.getProblemInfo(bojId);
+              const problemTags = item.tags
+                ? (item.tags
                     .map((tag: any) => tag.displayNames?.[0]?.name)
                     .filter(Boolean) as string[])
                 : [];
 
               problem = await Problem.create({
-                bojId: result.problemId,
-                title: result.titleKo,
-                level: result.level,
-                averageTries: result.averageTries,
+                bojId: item.problemId,
+                title: item.titleKo,
+                level: item.level,
+                averageTries: item.averageTries,
                 tags: problemTags,
               });
             }
@@ -90,9 +97,6 @@ export class UserController {
               averageTries: problem.averageTries || 0,
               tags: problem.tags || [],
             });
-          } catch (problemError) {
-            console.error(`Error processing problem ${bojId}:`, problemError);
-            continue;
           }
         }
 

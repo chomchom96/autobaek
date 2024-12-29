@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import User, { IUser } from "../models/user";
-import Problem, { IProblem } from "../models/problem";
+import User, { IUser } from "../models/user.js";
+import Problem, { IProblem } from "../models/problem.js";
 
 enum RecommendationType {
   DEFAULT = "default",
