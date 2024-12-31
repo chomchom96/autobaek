@@ -10,6 +10,11 @@ interface UserItem {
   tier: string;
 }
 
+interface UserInfoResponse {
+  tier: number;
+  maxStreak: number;
+}
+
 interface UserProblemResponse {
   count: number;
   items: UserProblemItem[];
@@ -62,6 +67,23 @@ const SolvedacService = {
         `https://solved.ac/api/v3/search/user`,
         {
           params: { query },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  },
+
+  async getUserInfo(handle: string): Promise<UserInfoResponse> {
+    try {
+      const response = await axios.get<UserInfoResponse>(
+        `https://solved.ac/api/v3/user/show`,
+        {
+          params: {
+            query: `handle=${handle}`,
+          },
         }
       );
       return response.data;

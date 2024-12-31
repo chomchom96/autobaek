@@ -72,3 +72,27 @@
     --chart-5: 340 75% 55%;
   }
 }
+
+.bg-bronze {
+  background-color: #753b01; /* 브론즈 색상 */
+}
+
+.bg-silver {
+  background-color: #c0c0c05d; /* 실버 색상 */
+}
+
+.bg-gold {
+  background-color: #dfbe00; /* 골드 색상 */
+}
+
+.bg-platinum {
+  background-color: #02ff8d; /* 플래티넘 색상 */
+}
+
+.bg-diamond {
+  background-color: #00b3ff; /* 다이아 색상 */
+}
+
+.bg-ruby {
+  background-color: #f6007f; /* 루비 색상 */
+}

@@ -12,6 +12,20 @@ const SolvedacService = {
             throw error;
         }
     },
+    async getUserInfo(handle) {
+        try {
+            const response = await axios.get(`https://solved.ac/api/v3/user/show`, {
+                params: {
+                    query: `handle=${handle}`,
+                },
+            });
+            return response.data;
+        }
+        catch (error) {
+            console.error(error);
+            throw error;
+        }
+    },
     async getUserProblemAll(handle, page) {
         try {
             const response = await axios.get(`https://solved.ac/api/v3/search/problem`, {

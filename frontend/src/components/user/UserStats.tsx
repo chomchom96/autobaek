@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
-  CalendarDays,
+  // CalendarDays,
   Award,
   BookOpen,
   Zap,
@@ -16,15 +16,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 interface TagStat {
   tag: string;
   count: number;
-}
-
-interface UserData {
-  id: string;
-  name: string;
-  level: string;
-  problemsSolved: number;
-  streak: number;
-  tagStats: TagStat[];
 }
 
 const recommendationTypes = [
@@ -61,36 +52,46 @@ const mockProblems = [
   },
 ];
 
-export default function UserStats({ userData }: { userData: UserData }) {
+// TODO : 문제추천 API + 컴포넌트로 전달
+export default function UserStats({
+  id,
+  level,
+  problemSolved,
+  streak,
+  tagStats,
+}: {
+  id:string,
+  level:number,
+  problemSolved:number,
+  streak:number,
+  tagStats: TagStat[];
+}) {
   const [activeTab, setActiveTab] = useState("skill-based");
-  const totalProblems = userData.tagStats.reduce(
-    (sum, stat) => sum + stat.count,
-    0
-  );
+  const totalProblems = tagStats.reduce((sum, stat) => sum + stat.count, 0);
 
   return (
     <div className="space-y-6">
       <Card className="bg-white bg-opacity-10 text-white">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-2xl font-bold">{userData.name}</CardTitle>
+          <CardTitle className="text-2xl font-bold">{id}</CardTitle>
           <Badge variant="secondary" className="text-lg">
-            Level {userData.level}
+            Level {level}
           </Badge>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex items-center space-x-2">
               <BookOpen className="h-4 w-4 text-blue-400" />
-              <span className="text-sm">푼 문제 {userData.problemsSolved}</span>
+              <span className="text-sm">푼 문제 {problemSolved}</span>
             </div>
             <div className="flex items-center space-x-2">
               <Zap className="h-4 w-4 text-yellow-400" />
-              <span className="text-sm">스트릭 {userData.streak}일</span>
+              <span className="text-sm">최대 스트릭 {streak}일</span>
             </div>
-            <div className="flex items-center space-x-2">
+            {/* <div className="flex items-center space-x-2">
               <CalendarDays className="h-4 w-4 text-green-400" />
               <span className="text-sm">시작일 2023-01-01</span>
-            </div>
+            </div> */}
           </div>
         </CardContent>
       </Card>
@@ -164,7 +165,7 @@ export default function UserStats({ userData }: { userData: UserData }) {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {userData.tagStats.map((stat) => (
+            {tagStats.map((stat) => (
               <div key={stat.tag} className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>{stat.tag}</span>

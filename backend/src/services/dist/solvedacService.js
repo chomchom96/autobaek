@@ -60,17 +60,16 @@ var SolvedacService = {
             });
         });
     },
-    getUserProblemAll: function (handle, page) {
+    getUserInfo: function (handle) {
         return __awaiter(this, void 0, Promise, function () {
             var response, error_2;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         _a.trys.push([0, 2, , 3]);
-                        return [4 /*yield*/, axios_js_1["default"].get("https://solved.ac/api/v3/search/problem", {
+                        return [4 /*yield*/, axios_js_1["default"].get("https://solved.ac/api/v3/user/show", {
                                 params: {
-                                    query: "solved_by:" + handle,
-                                    page: page
+                                    query: "handle=" + handle
                                 }
                             })];
                     case 1:
@@ -85,9 +84,34 @@ var SolvedacService = {
             });
         });
     },
+    getUserProblemAll: function (handle, page) {
+        return __awaiter(this, void 0, Promise, function () {
+            var response, error_3;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        return [4 /*yield*/, axios_js_1["default"].get("https://solved.ac/api/v3/search/problem", {
+                                params: {
+                                    query: "solved_by:" + handle,
+                                    page: page
+                                }
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [2 /*return*/, response.data];
+                    case 2:
+                        error_3 = _a.sent();
+                        console.error(error_3);
+                        throw error_3;
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    },
     getUserProblemStats: function (handle) {
         return __awaiter(this, void 0, Promise, function () {
-            var response, _a, count, items, tagRank, i, tag, error_3;
+            var response, _a, count, items, tagRank, i, tag, error_4;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -108,9 +132,9 @@ var SolvedacService = {
                         }
                         return [2 /*return*/, { count: count, items: items, tagRank: tagRank }];
                     case 2:
-                        error_3 = _b.sent();
-                        console.error(error_3);
-                        throw error_3;
+                        error_4 = _b.sent();
+                        console.error(error_4);
+                        throw error_4;
                     case 3: return [2 /*return*/];
                 }
             });
@@ -118,7 +142,7 @@ var SolvedacService = {
     },
     getProblemsByTag: function (tag) {
         return __awaiter(this, void 0, Promise, function () {
-            var response, error_4;
+            var response, error_5;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -135,9 +159,9 @@ var SolvedacService = {
                         response = _a.sent();
                         return [2 /*return*/, response.data];
                     case 2:
-                        error_4 = _a.sent();
-                        console.error(error_4);
-                        throw error_4;
+                        error_5 = _a.sent();
+                        console.error(error_5);
+                        throw error_5;
                     case 3: return [2 /*return*/];
                 }
             });
@@ -145,7 +169,7 @@ var SolvedacService = {
     },
     getProblemInfo: function (bojId) {
         return __awaiter(this, void 0, Promise, function () {
-            var response, error_5;
+            var response, error_6;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -157,9 +181,9 @@ var SolvedacService = {
                         response = _a.sent();
                         return [2 /*return*/, response.data];
                     case 2:
-                        error_5 = _a.sent();
-                        console.error(error_5);
-                        throw error_5;
+                        error_6 = _a.sent();
+                        console.error(error_6);
+                        throw error_6;
                     case 3: return [2 /*return*/];
                 }
             });

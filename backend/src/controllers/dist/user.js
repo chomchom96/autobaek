@@ -69,40 +69,65 @@ var UserController = /** @class */ (function () {
             });
         }); };
         this.getUserInfo = function (req, res, next) { return __awaiter(_this, void 0, Promise, function () {
-            var userId, level, existingUser, _a, count, items, totalPages, solvedProblems, i, _b, count_1, items_2, _i, items_1, item, bojId, tried, problem, problemTags, newUser, savedUser, saveError_1, error_1;
-            return __generator(this, function (_c) {
-                switch (_c.label) {
+            var userId, isUserPage, existingUser, _a, tier, maxStreak, error_1, _b, userInfo, userProblems, tier, maxStreak, count, items, totalPages, solvedProblems, i, _c, count_1, items_2, _i, items_1, item, bojId, tried, problem, problemTags, newUser, savedUser, saveError_1, error_2;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
                     case 0:
-                        _c.trys.push([0, 16, , 17]);
+                        _d.trys.push([0, 21, , 22]);
                         userId = req.query.id;
-                        level = parseInt(req.query.level) || 0;
+                        isUserPage = req.query.isUserPage;
                         return [4 /*yield*/, user_js_1["default"].findOne({ id: userId })];
                     case 1:
-                        existingUser = _c.sent();
-                        if (!!existingUser) return [3 /*break*/, 15];
-                        return [4 /*yield*/, solvedacService_js_1["default"].getUserProblemAll(userId, 1)];
+                        existingUser = _d.sent();
+                        if (!((existingUser === null || existingUser === void 0 ? void 0 : existingUser.level) === 0)) return [3 /*break*/, 6];
+                        _d.label = 2;
                     case 2:
-                        _a = _c.sent(), count = _a.count, items = _a.items;
+                        _d.trys.push([2, 5, , 6]);
+                        return [4 /*yield*/, solvedacService_js_1["default"].getUserInfo(userId)];
+                    case 3:
+                        _a = _d.sent(), tier = _a.tier, maxStreak = _a.maxStreak;
+                        existingUser.level = tier;
+                        existingUser.maxStreak = maxStreak;
+                        return [4 /*yield*/, existingUser.save()];
+                    case 4:
+                        _d.sent();
+                        return [3 /*break*/, 6];
+                    case 5:
+                        error_1 = _d.sent();
+                        console.error("Error fetching data from SolvedacApi", error_1);
+                        return [3 /*break*/, 6];
+                    case 6:
+                        if (!!existingUser) return [3 /*break*/, 20];
+                        if (isUserPage)
+                            return [2 /*return*/, res.status(400).json("잘못된 요청입니다.")];
+                        return [4 /*yield*/, Promise.all([
+                                solvedacService_js_1["default"].getUserInfo(userId),
+                                solvedacService_js_1["default"].getUserProblemAll(userId, 1),
+                            ])];
+                    case 7:
+                        _b = _d.sent(), userInfo = _b[0], userProblems = _b[1];
+                        tier = userInfo.tier, maxStreak = userInfo.maxStreak;
+                        count = userProblems.count, items = userProblems.items;
                         totalPages = Math.ceil(count / 50);
                         solvedProblems = [];
                         i = 1;
-                        _c.label = 3;
-                    case 3:
-                        if (!(i <= totalPages)) return [3 /*break*/, 11];
+                        _d.label = 8;
+                    case 8:
+                        if (!(i <= totalPages)) return [3 /*break*/, 16];
                         return [4 /*yield*/, solvedacService_js_1["default"].getUserProblemAll(userId, i)];
-                    case 4:
-                        _b = _c.sent(), count_1 = _b.count, items_2 = _b.items;
+                    case 9:
+                        _c = _d.sent(), count_1 = _c.count, items_2 = _c.items;
                         _i = 0, items_1 = items_2;
-                        _c.label = 5;
-                    case 5:
-                        if (!(_i < items_1.length)) return [3 /*break*/, 10];
+                        _d.label = 10;
+                    case 10:
+                        if (!(_i < items_1.length)) return [3 /*break*/, 15];
                         item = items_1[_i];
                         bojId = item.problemId;
                         tried = item.tried || 0;
                         return [4 /*yield*/, problem_js_1["default"].findOne({ bojId: bojId })];
-                    case 6:
-                        problem = _c.sent();
-                        if (!!problem) return [3 /*break*/, 8];
+                    case 11:
+                        problem = _d.sent();
+                        if (!!problem) return [3 /*break*/, 13];
                         problemTags = item.tags
                             ? item.tags
                                 .map(function (tag) { var _a, _b; return (_b = (_a = tag.displayNames) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.name; })
@@ -115,44 +140,45 @@ var UserController = /** @class */ (function () {
                                 averageTries: item.averageTries,
                                 tags: problemTags
                             })];
-                    case 7:
-                        problem = _c.sent();
-                        _c.label = 8;
-                    case 8:
+                    case 12:
+                        problem = _d.sent();
+                        _d.label = 13;
+                    case 13:
                         solvedProblems.push({
                             problemId: problem._id.toString(),
                             tried: tried,
                             averageTries: problem.averageTries || 0,
                             tags: problem.tags || []
                         });
-                        _c.label = 9;
-                    case 9:
+                        _d.label = 14;
+                    case 14:
                         _i++;
-                        return [3 /*break*/, 5];
-                    case 10:
+                        return [3 /*break*/, 10];
+                    case 15:
                         i++;
-                        return [3 /*break*/, 3];
-                    case 11:
+                        return [3 /*break*/, 8];
+                    case 16:
                         newUser = new user_js_1["default"]({
                             id: userId,
-                            level: level,
+                            level: tier,
                             solvedCnt: count || solvedProblems.length,
-                            solvedProblems: solvedProblems
+                            solvedProblems: solvedProblems,
+                            maxStreak: maxStreak
                         });
-                        _c.label = 12;
-                    case 12:
-                        _c.trys.push([12, 14, , 15]);
+                        _d.label = 17;
+                    case 17:
+                        _d.trys.push([17, 19, , 20]);
                         return [4 /*yield*/, newUser.save()];
-                    case 13:
-                        savedUser = _c.sent();
+                    case 18:
+                        savedUser = _d.sent();
                         console.log("User created successfully:", {
                             userId: savedUser.id,
                             solvedProblemsCount: savedUser.solvedProblems.length,
                             level: savedUser.level
                         });
                         return [2 /*return*/, res.status(201).json(savedUser.id)];
-                    case 14:
-                        saveError_1 = _c.sent();
+                    case 19:
+                        saveError_1 = _d.sent();
                         if (saveError_1.name === "ValidationError") {
                             return [2 /*return*/, res.status(400).json({
                                     message: "Validation Failed",
@@ -160,13 +186,13 @@ var UserController = /** @class */ (function () {
                                 })];
                         }
                         throw saveError_1;
-                    case 15: return [2 /*return*/, res.status(200).json(existingUser)];
-                    case 16:
-                        error_1 = _c.sent();
-                        console.error("Overall user info fetch error:", error_1);
-                        next(error_1);
-                        return [3 /*break*/, 17];
-                    case 17: return [2 /*return*/];
+                    case 20: return [2 /*return*/, res.status(200).json(existingUser)];
+                    case 21:
+                        error_2 = _d.sent();
+                        console.error("User info fetch error:", error_2);
+                        next(error_2);
+                        return [3 /*break*/, 22];
+                    case 22: return [2 /*return*/];
                 }
             });
         }); };

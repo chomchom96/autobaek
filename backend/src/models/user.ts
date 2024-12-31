@@ -14,13 +14,14 @@ interface TagStatistics {
   count: number;
 }
 
-export interface IUser {
+export interface IUser extends Document {
   id: string;
   level: number;
   solvedCnt: number;
   solvedProblems: SolvedProblem[];
   createdAt: Date;
   updatedAt: Date;
+  maxStreak?: number;
 }
 
 interface UserModel extends Model<IUser> {

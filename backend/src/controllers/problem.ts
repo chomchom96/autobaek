@@ -10,7 +10,7 @@ enum RecommendationType {
 }
 
 interface RecommendationRequest extends Request {
-  id: string; // Custom property for user ID
+  id: string;
   query: {
     type: RecommendationType; // Custom query type for recommendation type
   } & Request["query"];

@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
-export interface IProblem {
+export interface IProblem extends Document {
   bojId: number;
   level: number;
   title: string;

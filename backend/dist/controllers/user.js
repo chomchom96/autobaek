@@ -21,10 +21,29 @@ export class UserController {
     getUserInfo = async (req, res, next) => {
         try {
             const userId = req.query.id;
-            const level = parseInt(req.query.level) || 0;
+            // const level: number = parseInt(req.query.level as string);
+            const isUserPage = req.query.isUserPage;
             const existingUser = await User.findOne({ id: userId });
+            if (existingUser?.level === 0) {
+                try {
+                    const { tier, maxStreak } = await SolvedacService.getUserInfo(userId);
+                    existingUser.level = tier;
+                    existingUser.maxStreak = maxStreak;
+                    await existingUser.save();
+                }
+                catch (error) {
+                    console.error("Error fetching data from SolvedacApi", error);
+                }
+            }
             if (!existingUser) {
-                const { count, items } = await SolvedacService.getUserProblemAll(userId, 1);
+                if (isUserPage)
+                    return res.status(400).json("잘못된 요청입니다.");
+                const [userInfo, userProblems] = await Promise.all([
+                    SolvedacService.getUserInfo(userId),
+                    SolvedacService.getUserProblemAll(userId, 1),
+                ]);
+                const { tier, maxStreak } = userInfo;
+                const { count, items } = userProblems;
                 const totalPages = Math.ceil(count / 50);
                 // console.log("totalPages", totalPages);
                 const solvedProblems = [];
@@ -59,9 +78,10 @@ export class UserController {
                 }
                 const newUser = new User({
                     id: userId,
-                    level,
+                    level: tier,
                     solvedCnt: count || solvedProblems.length,
                     solvedProblems,
+                    maxStreak: maxStreak,
                 });
                 try {
                     const savedUser = await newUser.save();
@@ -85,7 +105,7 @@ export class UserController {
             return res.status(200).json(existingUser);
         }
         catch (error) {
-            console.error("Overall user info fetch error:", error);
+            console.error("User info fetch error:", error);
             next(error);
         }
     };

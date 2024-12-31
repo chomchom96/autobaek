@@ -1,23 +1,84 @@
 import { useParams } from "react-router-dom";
 import UserStats from "@/components/user/UserStats";
+import axios from "@/utils/axios";
+import { useState, useEffect } from "react";
+
+interface TagStat {
+  tag: string;
+  count: number;
+}
+
+interface Problem {
+  problemId: string;
+  tried: number;
+  averageTries: number;
+  tags: string[];
+  _id: string;
+}
+
+interface TagCounts {
+  [key: string]: number;
+}
+
+function countTags(problems: Problem[]): TagStat[] {
+  const tagCounts: TagCounts = {};
+
+  problems.forEach((problem) => {
+    problem.tags.forEach((tag) => {
+      tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+    });
+  });
+
+  const tagStats: TagStat[] = Object.entries(tagCounts).map(([tag, count]) => ({
+    tag,
+    count,
+  }));
+
+  tagStats.sort((a, b) => b.count - a.count);
+
+  return tagStats;
+}
 
 export default function UserPage() {
   const params = useParams();
-  const userData = {
-    id: params.id || "",
-    name: "이름",
-    level: "29",
-    problemsSolved: 500,
-    streak: 250,
-    tagStats: [
-      { tag: "그래프 탐색", count: 50 },
-      { tag: "수학", count: 40 },
-      { tag: "다이나믹 프로그래밍", count: 30 },
-      { tag: "트리", count: 25 },
-      { tag: "누적 합", count: 20 },
-      { tag: "정렬", count: 15 },
-    ],
-  };
+  // 유저 찾는 api promise -> 현재 문제를 tag별로 누적합을 반환하는 api promise
+  const [id, setId] = useState("");
+  const [level, setLevel] = useState(0);
+  const [problemSolved, setProblemSolved] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [tagStat, setTagStat] = useState<TagStat[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await axios.get(
+          `/user?id=${params.id}&isUserPage=true`
+        );
+        setId(response.data.id);
+        setLevel(response.data.level);
+        setStreak(response.data.maxStreak);
+        setProblemSolved(response.data.solvedCnt);
+        setTagStat(countTags(response.data.solvedProblem));
+      } catch (error) {
+        console.error(error);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [params.id]);
+
+  if (loading) {
+    return <div className="text-white">로딩 중...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-500">오류가 발생했습니다</div>;
+  }
 
   return (
     <div className="min-h-screen relative" id="bg">
@@ -30,10 +91,15 @@ export default function UserPage() {
           &larr; 돌아가기
         </a>
         <div className="bg-white bg-opacity-10 backdrop-blur-md rounded-lg p-6 text-white">
-          <UserStats userData={userData} />
+          <UserStats
+            id={id}
+            level={level}
+            problemSolved={problemSolved}
+            streak={streak}
+            tagStats={tagStat}
+          />
         </div>
       </div>
     </div>
   );
 }
-

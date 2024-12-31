@@ -1,22 +1,28 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Clock } from "lucide-react";
+import axios from "../../utils/axios";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
-const suggestedSearches = [
-  { userId: "cym", level: 29 },
-  { userId: "user1", level: 0 },
-  { userId: "dummy1", level: 20 },
-];
+// const suggestedSearches = [
+//   { userId: "cym", level: 29 },
+//   { userId: "user1", level: 0 },
+//   { userId: "dummy1", level: 20 },
+// ];
 
 export default function SearchBar() {
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [searchResult, setSearchResult] = useState<[]>([]);
 
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const history = JSON.parse(localStorage.getItem("searchHistory") || "[]");
@@ -36,6 +42,29 @@ export default function SearchBar() {
     };
   }, []);
 
+  const fetchSearchResults = async (query: string): Promise<[]> => {
+    const response = await axios.get<{ searchResult: [] }>(
+      `search?user=${query}`
+    );
+    return response.data.searchResult;
+  };
+
+  const useSearchQuery = (query: string) => {
+    return useQuery({
+      queryKey: ["search", query],
+      queryFn: () => fetchSearchResults(query),
+      staleTime: 1000,
+    });
+  };
+
+  const { data, error, isLoading } = useSearchQuery(query);
+
+  useEffect(() => {
+    if (data) {
+      setSearchResult(data);
+    }
+  }, [data]);
+
   const handleHistoryClick = (item: string) => {
     setQuery(item);
   };
@@ -45,28 +74,44 @@ export default function SearchBar() {
   //   inputRef.current?.focus();
   // };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("query:", query);
-    setIsFocused(false);
-  };
+  const handleSubmit = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      if (query) {
+        const updatedHistory = [...new Set([query, ...searchHistory])];
+        setSearchHistory(updatedHistory);
+        localStorage.setItem("searchHistory", JSON.stringify(updatedHistory));
+        navigate(`/user/${query}`);
+      }
+      setIsFocused(false);
+    },
+    [navigate, query, searchHistory]
+  );
 
-  const handleSuggestionClick = useCallback((suggestion: string) => {
-    setQuery(suggestion);
-    setIsFocused(false);
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, []);
+  const handleSuggestionClick = useCallback(
+    (suggestion: string) => {
+      setQuery(suggestion);
+      setIsFocused(false);
+      const updatedHistory = [...new Set([suggestion, ...searchHistory])];
+      setSearchHistory(updatedHistory);
+      localStorage.setItem("searchHistory", JSON.stringify(updatedHistory));
+
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+      navigate(`/user/${suggestion}`); // URL 이동
+    },
+    [navigate, searchHistory]
+  );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (isFocused && suggestedSearches.length > 0) {
+      if (isFocused && searchResult.length > 0) {
         switch (e.key) {
           case "ArrowDown":
             e.preventDefault();
             setSelectedIndex((prev) =>
-              Math.min(prev + 1, suggestedSearches.length - 1)
+              Math.min(prev + 1, searchResult.length - 1)
             );
             break;
           case "ArrowUp":
@@ -75,7 +120,9 @@ export default function SearchBar() {
             break;
           case "Enter":
             if (selectedIndex >= 0) {
-              handleSuggestionClick(suggestedSearches[selectedIndex].userId);
+              handleSuggestionClick(searchResult[selectedIndex][0]);
+            } else {
+              handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
             }
             break;
           case "Escape":
@@ -84,7 +131,13 @@ export default function SearchBar() {
         }
       }
     },
-    [handleSuggestionClick, isFocused, selectedIndex]
+    [
+      handleSuggestionClick,
+      isFocused,
+      searchResult,
+      selectedIndex,
+      handleSubmit,
+    ]
   );
 
   return (
@@ -93,10 +146,13 @@ export default function SearchBar() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="absolute -top-14 left-0 text-3xl font-bold text-white"
+        className="absolute -top-14 left-0 text-xl  text-white"
         id="title"
       >
-        하루에 딱 한문제만 <span className="text-yellow-300">"서비스명"</span>
+        하루에 딱 한문제만{" "}
+        <span className="text-yellow-300 text-4xl ml-4">
+          백스트릭 BaekStreak
+        </span>
       </motion.h1>
 
       <div className="relative">
@@ -169,7 +225,16 @@ export default function SearchBar() {
                 ) : (
                   <div ref={dropdownRef} id="search-suggestions" role="listbox">
                     <ul className="py-2">
-                      {suggestedSearches.map((suggestion, index) => (
+                      {/* {isLoading && <p>로딩중...</p>} */}
+                      {!isLoading && searchResult.length === 0 && !error && (
+                        <p className="text-center">검색 결과가 없습니다.</p>
+                      )}
+                      {error && (
+                        <p className="text-center">
+                          오류가 발생했습니다. 다시 시도해 주세요.
+                        </p>
+                      )}
+                      {searchResult.map((suggestion, index) => (
                         <li
                           key={index}
                           role="option"
@@ -177,22 +242,20 @@ export default function SearchBar() {
                         >
                           <button
                             type="button"
-                            onClick={() =>
-                              handleSuggestionClick(suggestion.userId)
-                            }
-                            className={`w-full px-6 py-3 text-left text-gray-800 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors ${
+                            onClick={() => handleSuggestionClick(suggestion[0])}
+                            className={`w-full px-6 py-3 flex flex-row items-center gap-2 text-gray-800 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none transition-colors ${
                               index === selectedIndex ? "bg-gray-50" : ""
                             }`}
                           >
-                            <span className="font-medium">
-                              {suggestion.userId}
-                            </span>
+                            <span className="font-lg">{suggestion[0]}</span>
                             <span
-                              className={`ml-2 px-2 py-1 rounded-full text-xs ${getLevelColor(
-                                suggestion.level
-                              )}`}
+                              className={`flex items-center justify-center size-6 rounded-full font-bold text-white ${
+                                getLevelColor(suggestion[1]).bgColor
+                              }`}
                             >
-                              {suggestion.level}
+                              <span>
+                                {getLevelColor(suggestion[1]).levelName}
+                              </span>
                             </span>
                           </button>
                         </li>
@@ -210,11 +273,34 @@ export default function SearchBar() {
 }
 
 function getLevelColor(level: number) {
-  return level > 29
-    ? "bg-yellow-100 text-yellow-800"
-    : level > 20
-    ? "bg-gray-100 text-gray-800"
-    : level > 10
-    ? "bg-blue-100 text-blue-800"
-    : "bg-gray-100 text-gray-800";
+  let levelName: string = "";
+  let bgColor: string = "";
+
+  if (level >= 1 && level <= 5) {
+    levelName = `${6 - level}`;
+    bgColor = "bg-bronze"; // 브론즈 색상 클래스
+  } else if (level >= 6 && level <= 10) {
+    levelName = `${11 - level}`; // 6 -> 실버 5, 10 -> 실버 1
+    bgColor = "bg-silver"; // 실버 색상 클래스
+  } else if (level >= 11 && level <= 15) {
+    levelName = `${16 - level}`; // 11 -> 골드 5, 15 -> 골드 1
+    bgColor = "bg-gold"; // 골드 색상 클래스
+  } else if (level >= 16 && level <= 20) {
+    levelName = `${21 - level}`; // 16 -> 플래티넘 5, 20 -> 플래티넘 1
+    bgColor = "bg-platinum"; // 플래티넘 색상 클래스
+  } else if (level >= 21 && level <= 25) {
+    levelName = `${26 - level}`; // 21 -> 다이아 5, 25 -> 다이아 1
+    bgColor = "bg-diamond"; // 다이아 색상 클래스
+  } else if (level >= 26 && level <= 30) {
+    levelName = `${31 - level}`; // 26 -> 루비 5, 30 -> 루비 1
+    bgColor = "bg-ruby"; // 루비 색상 클래스
+  } else {
+    levelName = "M"; // 잘못된 레벨 입력
+    bgColor = "bg-sky-500"; // 기본 색상
+  }
+
+  return {
+    levelName,
+    bgColor,
+  };
 }
