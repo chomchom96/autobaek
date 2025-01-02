@@ -69,7 +69,7 @@ var SolvedacService = {
                         _a.trys.push([0, 2, , 3]);
                         return [4 /*yield*/, axios_js_1["default"].get("https://solved.ac/api/v3/user/show", {
                                 params: {
-                                    query: "handle=" + handle
+                                    handle: handle
                                 }
                             })];
                     case 1:

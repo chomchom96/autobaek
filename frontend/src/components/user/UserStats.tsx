@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+// import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
   // CalendarDays,
@@ -10,8 +10,14 @@ import {
   Brain,
   TrendingUp,
   Smile,
+  Bookmark,
+  BookmarkCheck,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import axios from "@/utils/axios";
+import { isAxiosError } from "axios";
+import TagProblemGraph from "./TagProblemGraph";
+import getLevelColor from "@/utils/getLevelColor";
 
 interface TagStat {
   tag: string;
@@ -19,40 +25,24 @@ interface TagStat {
 }
 
 const recommendationTypes = [
-  { id: "많이 푼 문제", name: "많이 푼 문제", icon: TrendingUp },
-  { id: "내가 약한 문제", name: "내가 약한 문제", icon: Zap },
-  { id: "챌린지 문제", name: "챌린지 문제", icon: Brain },
-  { id: "스트릭해용", name: "스트릭해용", icon: Smile },
+  { id: "default", name: "많이 푼 문제", icon: TrendingUp },
+  { id: "topic", name: "내가 약한 문제", icon: Zap },
+  { id: "progress", name: "챌린지 문제", icon: Brain },
+  { id: "streak", name: "스트릭해용", icon: Smile },
 ];
 
-const mockProblems = [
-  {
-    id: 1001,
-    title: "A+B",
-    difficulty: 1,
-    tags: ["구현", "사칙문제"],
-  },
-  {
-    id: 1002,
-    title: "터렛",
-    difficulty: 8,
-    tags: ["기하학", "수학"],
-  },
-  {
-    id: 1003,
-    title: "유기농 배추",
-    difficulty: 13,
-    tags: ["그래프 이론", "너비 우선 탐색"],
-  },
-  {
-    id: 1004,
-    title: "다이아몬드 광산",
-    difficulty: 16,
-    tags: ["다이나믹 프로그래밍", "누적 합"],
-  },
-];
+interface Problem {
+  problemId: string;
+  problemTitle: string;
+  difficulty: number;
+  tags: string[];
+}
 
-// TODO : 문제추천 API + 컴포넌트로 전달
+interface ResponseDataType {
+  message: string;
+  code: number;
+}
+
 export default function UserStats({
   id,
   level,
@@ -60,22 +50,80 @@ export default function UserStats({
   streak,
   tagStats,
 }: {
-  id:string,
-  level:number,
-  problemSolved:number,
-  streak:number,
+  id: string;
+  level: number;
+  problemSolved: number;
+  streak: number;
   tagStats: TagStat[];
 }) {
-  const [activeTab, setActiveTab] = useState("skill-based");
-  const totalProblems = tagStats.reduce((sum, stat) => sum + stat.count, 0);
+  const [activeTab, setActiveTab] = useState("default");
+  const [recommendedProblems, setRecommendedProblems] = useState<Problem[]>([]);
+  // const totalProblems = tagStats.reduce((sum, stat) => sum + stat.count, 0);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+
+  useEffect(() => {
+    const bookmarkedUsers = JSON.parse(
+      localStorage.getItem("bookmarkedUsers") || "[]"
+    );
+    setIsBookmarked(bookmarkedUsers.includes(id));
+  }, []);
+
+  const toggleBookmark = () => {
+    const bookmarkedUsers = JSON.parse(
+      localStorage.getItem("bookmarkedUsers") || "[]"
+    );
+
+    let newBookmarkedUsers;
+    if (isBookmarked) {
+      newBookmarkedUsers = bookmarkedUsers.filter((user:string) => user !== id);
+    } else {
+      newBookmarkedUsers = [...bookmarkedUsers, id];
+    }
+
+    localStorage.setItem("bookmarkedUsers", JSON.stringify(newBookmarkedUsers));
+    setIsBookmarked(!isBookmarked);
+  };
+
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      try {
+        const response = await axios.get(`/recommend`, {
+          params: { type: activeTab, id },
+        });
+        setRecommendedProblems(response.data.recommendations);
+        setErrorMessage(null);
+      } catch (error) {
+        if (isAxiosError<ResponseDataType>(error) && error.response) {
+          if (
+            error.response.data.message ===
+            "User level too low for streak problems"
+          ) {
+            setErrorMessage(
+              "사용자의 레벨이 너무 낮아 스트릭 문제를 추천할 수 없습니다."
+            );
+          } else {
+            setErrorMessage("추천 문제를 가져오는 중 오류가 발생했습니다.");
+          }
+        } else {
+          setErrorMessage("예기치 않은 오류가 발생했습니다.");
+        }
+      }
+    };
+
+    fetchRecommendations();
+  }, [activeTab, id]); // activeTab과 id가 변경될 때마다 호출
 
   return (
     <div className="space-y-6">
       <Card className="bg-white bg-opacity-10 text-white">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-2xl font-bold">{id}</CardTitle>
-          <Badge variant="secondary" className="text-lg">
-            Level {level}
+          <Badge
+            variant="secondary"
+            className={`text-lg text-white ${getLevelColor(level).bgColor}`}
+          >
+            {getLevelColor(level).levelName}
           </Badge>
         </CardHeader>
         <CardContent>
@@ -88,10 +136,16 @@ export default function UserStats({
               <Zap className="h-4 w-4 text-yellow-400" />
               <span className="text-sm">최대 스트릭 {streak}일</span>
             </div>
-            {/* <div className="flex items-center space-x-2">
-              <CalendarDays className="h-4 w-4 text-green-400" />
-              <span className="text-sm">시작일 2023-01-01</span>
-            </div> */}
+            <button
+              onClick={toggleBookmark}
+              className="p-2 hover:bg-white hover:bg-opacity-10 rounded-full transition-colors"
+            >
+              {isBookmarked ? (
+                <BookmarkCheck className="h-6 w-6 text-blue-400" />
+              ) : (
+                <Bookmark className="h-6 w-6 text-gray-400" />
+              )}
+            </button>
           </div>
         </CardContent>
       </Card>
@@ -119,23 +173,32 @@ export default function UserStats({
             {recommendationTypes.map((type) => (
               <TabsContent key={type.id} value={type.id}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {mockProblems.map((problem) => (
-                    <Card key={problem.id} className="bg-white">
-                      <CardContent className="p-4">
+                  {errorMessage && (
+                    <div className="text-red-500 p-4 rounded">
+                      {errorMessage}
+                    </div>
+                  )}
+                  {recommendedProblems.map((problem) => (
+                    <Card key={problem.problemId} className="bg-white">
+                      <CardContent
+                        className="p-4"
+                        onClick={() =>
+                          window.open(
+                            `http://acmicpc.net/problem/${problem.problemId}`
+                          )
+                        }
+                      >
                         <h3 className="text-lg font-semibold mb-2 text-gray-800">
-                          {problem.title}
+                          {problem.problemTitle}
                         </h3>
                         <div className="flex flex-wrap items-center gap-2 mb-2">
                           <Badge
-                            variant={
-                              problem.difficulty < 8
-                                ? "default"
-                                : problem.difficulty < 13
-                                ? "secondary"
-                                : "destructive"
-                            }
+                            id={problem.problemId}
+                            className={`text-white ${
+                              getLevelColor(level).bgColor
+                            }`}
                           >
-                            {problem.difficulty}
+                            {getLevelColor(problem.difficulty).levelName}
                           </Badge>
                           {problem.tags.map((tag) => (
                             <Badge key={tag} variant="secondary">
@@ -143,10 +206,6 @@ export default function UserStats({
                             </Badge>
                           ))}
                         </div>
-                        {/* <p className="text-sm text-gray-600">
-                          추천 기준 : {" "}
-                          {type.name.toLowerCase()} profile.
-                        </p> */}
                       </CardContent>
                     </Card>
                   ))}
@@ -163,8 +222,9 @@ export default function UserStats({
             문제 풀이 현황
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+        <CardContent className="p-12 w-full h-fit mx-auto bg-white">
+          <TagProblemGraph tagStats={tagStats.slice(0, 8)} />
+          {/* <div className="space-y-4">
             {tagStats.map((stat) => (
               <div key={stat.tag} className="space-y-2">
                 <div className="flex justify-between text-sm">
@@ -179,7 +239,7 @@ export default function UserStats({
                 />
               </div>
             ))}
-          </div>
+          </div> */}
         </CardContent>
       </Card>
 

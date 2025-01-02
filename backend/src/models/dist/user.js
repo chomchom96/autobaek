@@ -50,6 +50,10 @@ var userSchema = new mongoose_1.Schema({
         type: Number,
         required: true
     },
+    maxStreak: {
+        type: Number,
+        required: false
+    },
     solvedProblems: [
         {
             problemId: {

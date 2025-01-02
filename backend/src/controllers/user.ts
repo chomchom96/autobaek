@@ -8,6 +8,11 @@ interface SearchUserResponse {
   searchResult: [string, string][];
 }
 
+interface UserInfoResponse {
+  maxStreak: number;
+  tier: number;
+}
+
 interface ProblemInfo {
   problemId: string;
   tried: number;
@@ -48,7 +53,7 @@ export class UserController {
     req: Request,
     res: Response,
     next: NextFunction
-  ): Promise<Response | void> => {
+  ): Promise<Response<UserInfoResponse> | void> => {
     try {
       const userId: string = req.query.id as string;
       // const level: number = parseInt(req.query.level as string);
@@ -56,8 +61,12 @@ export class UserController {
 
       const existingUser: IUser | null = await User.findOne({ id: userId });
 
-      if (existingUser?.level === 0) {
+      // const nullProblem = await Problem.find({ title: null });
+      // console.log(nullProblem);
+
+      if (existingUser?.level === 0 || existingUser?.maxStreak === null) {
         try {
+          console.log("level = ", existingUser.level, ",maxStreak = ", existingUser.maxStreak)
           const { tier, maxStreak } = await SolvedacService.getUserInfo(userId);
           existingUser.level = tier;
           existingUser.maxStreak = maxStreak;
@@ -68,7 +77,7 @@ export class UserController {
       }
 
       if (!existingUser) {
-        if (isUserPage) return res.status(400).json("잘못된 요청입니다.");
+        // if (isUserPage) return res.status(400).json("존재하는 사용자가 없습니다.");
 
         const [userInfo, userProblems] = await Promise.all([
           SolvedacService.getUserInfo(userId),

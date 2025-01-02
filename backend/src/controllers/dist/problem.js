@@ -61,17 +61,17 @@ var ProblemController = /** @class */ (function () {
     function ProblemController() {
         var _this = this;
         this.recommendProblem = function (req, res, next) { return __awaiter(_this, void 0, Promise, function () {
-            var userId, recommendationType, user, userLevel, solvedProblems, recommendedProblems, err_1;
+            var userId, recommendationType, user, userLevel, solvedProblems, recommendedProblems, error_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         _a.trys.push([0, 3, , 4]);
-                        userId = req.id;
+                        userId = req.query.id;
                         recommendationType = req.query.type;
                         if (!Object.values(RecommendationType).includes(recommendationType)) {
                             return [2 /*return*/, res.status(400).json({ message: "Invalid recommendation type" })];
                         }
-                        return [4 /*yield*/, user_js_1["default"].findById(userId)];
+                        return [4 /*yield*/, user_js_1["default"].findOne({ id: userId })];
                     case 1:
                         user = _a.sent();
                         if (!user) {
@@ -93,9 +93,9 @@ var ProblemController = /** @class */ (function () {
                         });
                         return [3 /*break*/, 4];
                     case 3:
-                        err_1 = _a.sent();
-                        console.error("Problem recommendation error:", err_1);
-                        next(err_1);
+                        error_1 = _a.sent();
+                        console.error("Problem recommendation error:", error_1);
+                        next(error_1);
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
                 }
@@ -104,7 +104,7 @@ var ProblemController = /** @class */ (function () {
     }
     ProblemController.prototype.getRecommendations = function (type, user, userLevel, solvedProblems) {
         return __awaiter(this, void 0, Promise, function () {
-            var baseQuery, recommendations, _a, error_1;
+            var baseQuery, recommendations, _a, error_2;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -142,8 +142,8 @@ var ProblemController = /** @class */ (function () {
                     case 10: throw new Error("Invalid recommendation type");
                     case 11: return [3 /*break*/, 13];
                     case 12:
-                        error_1 = _b.sent();
-                        console.error(error_1);
+                        error_2 = _b.sent();
+                        console.error(error_2);
                         return [2 /*return*/, { message: "Error fetching recommendations", recommendations: [] }];
                     case 13: return [2 /*return*/, { message: type + " recommendations", recommendations: recommendations }];
                 }
@@ -156,8 +156,8 @@ var ProblemController = /** @class */ (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, problem_js_1["default"].find(__assign(__assign({}, baseQuery), { level: {
-                                $gte: userLevel - 1,
-                                $lte: userLevel + 1
+                                $gte: userLevel - 5,
+                                $lte: userLevel + 5
                             } }))
                             .sort({ submitCount: -1 })
                             .limit(ProblemController.MAX_RECOMMENDATIONS)];
@@ -165,6 +165,7 @@ var ProblemController = /** @class */ (function () {
                         problems = _a.sent();
                         return [2 /*return*/, problems.map(function (problem) { return ({
                                 problemId: problem._id.toString(),
+                                problemBojId: problem.bojId,
                                 problemTitle: problem.title,
                                 difficulty: problem.level,
                                 tags: problem.tags,
@@ -207,6 +208,7 @@ var ProblemController = /** @class */ (function () {
                                 var problem = _a.problem;
                                 return ({
                                     problemId: problem._id.toString(),
+                                    problemBojId: problem.bojId,
                                     problemTitle: problem.title,
                                     difficulty: problem.level,
                                     tags: problem.tags,
@@ -223,8 +225,8 @@ var ProblemController = /** @class */ (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, problem_js_1["default"].find(__assign(__assign({}, baseQuery), { level: {
-                                $gt: userLevel,
-                                $lte: userLevel + 2
+                                $gt: userLevel + 3,
+                                $lte: userLevel + 10
                             } }))
                             .sort({ submitCount: -1 })
                             .limit(ProblemController.MAX_RECOMMENDATIONS)];
@@ -232,6 +234,7 @@ var ProblemController = /** @class */ (function () {
                         problems = _a.sent();
                         return [2 /*return*/, problems.map(function (problem) { return ({
                                 problemId: problem._id.toString(),
+                                problemBojId: problem.bojId,
                                 problemTitle: problem.title,
                                 difficulty: problem.level,
                                 tags: problem.tags,
@@ -251,15 +254,16 @@ var ProblemController = /** @class */ (function () {
                             throw new Error("User level too low for streak problems");
                         }
                         return [4 /*yield*/, problem_js_1["default"].find(__assign(__assign({}, baseQuery), { level: {
-                                    $gte: Math.max(1, userLevel - 2),
-                                    $lte: userLevel
+                                    $gte: Math.max(1, userLevel - 10),
+                                    $lte: userLevel - 5
                                 } }))
-                                .sort({ submitCount: -1 })
+                                .sort({ submitCount: -1, difficulty: -1 })
                                 .limit(ProblemController.MAX_RECOMMENDATIONS)];
                     case 1:
                         problems = _a.sent();
                         return [2 /*return*/, problems.map(function (problem) { return ({
                                 problemId: problem._id.toString(),
+                                problemBojId: problem.bojId,
                                 problemTitle: problem.title,
                                 difficulty: problem.level,
                                 tags: problem.tags,

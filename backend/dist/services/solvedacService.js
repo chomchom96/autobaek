@@ -16,7 +16,7 @@ const SolvedacService = {
         try {
             const response = await axios.get(`https://solved.ac/api/v3/user/show`, {
                 params: {
-                    query: `handle=${handle}`,
+                    handle: handle,
                 },
             });
             return response.data;

@@ -42,6 +42,10 @@ const userSchema = new Schema<IUser>(
       type: Number,
       required: true,
     },
+    maxStreak: {
+      type: Number,
+      required: false,
+    },
     solvedProblems: [
       {
         problemId: {

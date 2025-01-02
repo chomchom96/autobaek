@@ -12,6 +12,10 @@ const userSchema = new Schema({
         type: Number,
         required: true,
     },
+    maxStreak: {
+        type: Number,
+        required: false,
+    },
     solvedProblems: [
         {
             problemId: {

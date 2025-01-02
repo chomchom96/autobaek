@@ -79,10 +79,11 @@ var UserController = /** @class */ (function () {
                         return [4 /*yield*/, user_js_1["default"].findOne({ id: userId })];
                     case 1:
                         existingUser = _d.sent();
-                        if (!((existingUser === null || existingUser === void 0 ? void 0 : existingUser.level) === 0)) return [3 /*break*/, 6];
+                        if (!((existingUser === null || existingUser === void 0 ? void 0 : existingUser.level) === 0 || (existingUser === null || existingUser === void 0 ? void 0 : existingUser.maxStreak) === null)) return [3 /*break*/, 6];
                         _d.label = 2;
                     case 2:
                         _d.trys.push([2, 5, , 6]);
+                        console.log("level = ", existingUser.level, ",maxStreak = ", existingUser.maxStreak);
                         return [4 /*yield*/, solvedacService_js_1["default"].getUserInfo(userId)];
                     case 3:
                         _a = _d.sent(), tier = _a.tier, maxStreak = _a.maxStreak;
@@ -98,8 +99,6 @@ var UserController = /** @class */ (function () {
                         return [3 /*break*/, 6];
                     case 6:
                         if (!!existingUser) return [3 /*break*/, 20];
-                        if (isUserPage)
-                            return [2 /*return*/, res.status(400).json("잘못된 요청입니다.")];
                         return [4 /*yield*/, Promise.all([
                                 solvedacService_js_1["default"].getUserInfo(userId),
                                 solvedacService_js_1["default"].getUserProblemAll(userId, 1),

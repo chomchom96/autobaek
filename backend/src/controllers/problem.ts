@@ -12,7 +12,7 @@ enum RecommendationType {
 interface RecommendationRequest extends Request {
   id: string;
   query: {
-    type: RecommendationType; // Custom query type for recommendation type
+    type: RecommendationType;
   } & Request["query"];
 }
 
@@ -20,6 +20,7 @@ interface RecommendationResponse {
   message: string;
   recommendations: {
     problemId: string;
+    problemBojId: number;
     problemTitle?: string;
     difficulty?: number;
     recommendationReason?: string;
@@ -37,14 +38,14 @@ export class ProblemController {
     next: NextFunction
   ): Promise<Response<RecommendationResponse> | void> => {
     try {
-      const userId = req.id;
+      const userId = req.query.id;
       const recommendationType = req.query.type;
 
       if (!Object.values(RecommendationType).includes(recommendationType)) {
         return res.status(400).json({ message: "Invalid recommendation type" });
       }
 
-      const user = await User.findById(userId);
+      const user = await User.findOne({ id: userId });
 
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -72,9 +73,9 @@ export class ProblemController {
         message: `${recommendationType} recommendations`,
         recommendations: recommendedProblems.recommendations,
       });
-    } catch (err) {
-      console.error("Problem recommendation error:", err);
-      next(err);
+    } catch (error) {
+      console.error("Problem recommendation error:", error);
+      next(error);
     }
   };
 
@@ -90,6 +91,7 @@ export class ProblemController {
 
     let recommendations: {
       problemId: string;
+      problemBojId: number;
       problemTitle?: string;
       difficulty?: number;
       recommendationReason?: string;
@@ -144,6 +146,7 @@ export class ProblemController {
   ): Promise<
     {
       problemId: string;
+      problemBojId: number;
       problemTitle: string;
       difficulty: number;
       tags: string[];
@@ -153,8 +156,8 @@ export class ProblemController {
     const problems = await Problem.find({
       ...baseQuery,
       level: {
-        $gte: userLevel - 1,
-        $lte: userLevel + 1,
+        $gte: userLevel - 5,
+        $lte: userLevel + 5,
       },
     })
       .sort({ submitCount: -1 })
@@ -162,6 +165,7 @@ export class ProblemController {
 
     return problems.map((problem) => ({
       problemId: problem._id.toString(),
+      problemBojId: problem.bojId,
       problemTitle: problem.title,
       difficulty: problem.level,
       tags: problem.tags,
@@ -176,6 +180,7 @@ export class ProblemController {
   ): Promise<
     {
       problemId: string;
+      problemBojId: number;
       problemTitle: string;
       difficulty: number;
       tags: string[];
@@ -212,6 +217,7 @@ export class ProblemController {
 
     return scoredProblems.map(({ problem }) => ({
       problemId: problem._id.toString(),
+      problemBojId: problem.bojId,
       problemTitle: problem.title,
       difficulty: problem.level,
       tags: problem.tags,
@@ -225,6 +231,7 @@ export class ProblemController {
   ): Promise<
     {
       problemId: string;
+      problemBojId: number;
       problemTitle: string;
       difficulty: number;
       tags: string[];
@@ -234,8 +241,8 @@ export class ProblemController {
     const problems = await Problem.find({
       ...baseQuery,
       level: {
-        $gt: userLevel,
-        $lte: userLevel + 2,
+        $gt: userLevel + 3,
+        $lte: userLevel + 10,
       },
     })
       .sort({ submitCount: -1 })
@@ -243,6 +250,7 @@ export class ProblemController {
 
     return problems.map((problem) => ({
       problemId: problem._id.toString(),
+      problemBojId: problem.bojId,
       problemTitle: problem.title,
       difficulty: problem.level,
       tags: problem.tags,
@@ -257,6 +265,7 @@ export class ProblemController {
   ): Promise<
     {
       problemId: string;
+      problemBojId: number;
       problemTitle: string;
       difficulty: number;
       tags: string[];
@@ -270,15 +279,16 @@ export class ProblemController {
     const problems = await Problem.find({
       ...baseQuery,
       level: {
-        $gte: Math.max(1, userLevel - 2),
-        $lte: userLevel,
+        $gte: Math.max(1, userLevel - 10),
+        $lte: userLevel - 5,
       },
     })
-      .sort({ submitCount: -1 })
+      .sort({ submitCount: -1, difficulty: -1 })
       .limit(ProblemController.MAX_RECOMMENDATIONS);
 
     return problems.map((problem) => ({
       problemId: problem._id.toString(),
+      problemBojId: problem.bojId,
       problemTitle: problem.title,
       difficulty: problem.level,
       tags: problem.tags,

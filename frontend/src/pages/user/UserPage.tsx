@@ -50,17 +50,24 @@ export default function UserPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  const handleRetry = () => {
+    setError(false);
+    setLoading(true);
+  };
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const response = await axios.get(
           `/user?id=${params.id}&isUserPage=true`
         );
+
+        // console.log(response.data);
         setId(response.data.id);
         setLevel(response.data.level);
         setStreak(response.data.maxStreak);
         setProblemSolved(response.data.solvedCnt);
-        setTagStat(countTags(response.data.solvedProblem));
+        setTagStat(countTags(response.data.solvedProblems));
       } catch (error) {
         console.error(error);
         setError(true);
@@ -70,14 +77,24 @@ export default function UserPage() {
     };
 
     fetchUserData();
-  }, [params.id]);
+  }, [params.id, error]);
 
   if (loading) {
     return <div className="text-white">로딩 중...</div>;
   }
 
   if (error) {
-    return <div className="text-red-500">오류가 발생했습니다</div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <div className="text-red-500 text-lg">{error}</div>
+        <button
+          onClick={handleRetry}
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+        >
+          다시 시도하기
+        </button>
+      </div>
+    );
   }
 
   return (

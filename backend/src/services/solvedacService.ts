@@ -82,7 +82,7 @@ const SolvedacService = {
         `https://solved.ac/api/v3/user/show`,
         {
           params: {
-            query: `handle=${handle}`,
+            handle: handle,
           },
         }
       );

@@ -4,6 +4,7 @@ import { Search, Clock } from "lucide-react";
 import axios from "../../utils/axios";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import getLevelColor from "@/utils/getLevelColor";
 
 // const suggestedSearches = [
 //   { userId: "cym", level: 29 },
@@ -15,7 +16,7 @@ export default function SearchBar() {
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [searchResult, setSearchResult] = useState<[]>([]);
+  const [searchResult, setSearchResult] = useState<[string, number][]>([]);
 
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -122,7 +123,9 @@ export default function SearchBar() {
             if (selectedIndex >= 0) {
               handleSuggestionClick(searchResult[selectedIndex][0]);
             } else {
-              handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
+              if (query && searchResult[0][0] === "query")
+                handleSuggestionClick(searchResult[0][0]);
+              // handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
             }
             break;
           case "Escape":
@@ -131,13 +134,7 @@ export default function SearchBar() {
         }
       }
     },
-    [
-      handleSuggestionClick,
-      isFocused,
-      searchResult,
-      selectedIndex,
-      handleSubmit,
-    ]
+    [handleSuggestionClick, isFocused, query, searchResult, selectedIndex]
   );
 
   return (
@@ -249,7 +246,7 @@ export default function SearchBar() {
                           >
                             <span className="font-lg">{suggestion[0]}</span>
                             <span
-                              className={`flex items-center justify-center size-6 rounded-full font-bold text-white ${
+                              className={`flex items-center justify-center w-fit rounded-full font-bold text-white ${
                                 getLevelColor(suggestion[1]).bgColor
                               }`}
                             >
@@ -270,37 +267,4 @@ export default function SearchBar() {
       </div>
     </div>
   );
-}
-
-function getLevelColor(level: number) {
-  let levelName: string = "";
-  let bgColor: string = "";
-
-  if (level >= 1 && level <= 5) {
-    levelName = `${6 - level}`;
-    bgColor = "bg-bronze"; // 브론즈 색상 클래스
-  } else if (level >= 6 && level <= 10) {
-    levelName = `${11 - level}`; // 6 -> 실버 5, 10 -> 실버 1
-    bgColor = "bg-silver"; // 실버 색상 클래스
-  } else if (level >= 11 && level <= 15) {
-    levelName = `${16 - level}`; // 11 -> 골드 5, 15 -> 골드 1
-    bgColor = "bg-gold"; // 골드 색상 클래스
-  } else if (level >= 16 && level <= 20) {
-    levelName = `${21 - level}`; // 16 -> 플래티넘 5, 20 -> 플래티넘 1
-    bgColor = "bg-platinum"; // 플래티넘 색상 클래스
-  } else if (level >= 21 && level <= 25) {
-    levelName = `${26 - level}`; // 21 -> 다이아 5, 25 -> 다이아 1
-    bgColor = "bg-diamond"; // 다이아 색상 클래스
-  } else if (level >= 26 && level <= 30) {
-    levelName = `${31 - level}`; // 26 -> 루비 5, 30 -> 루비 1
-    bgColor = "bg-ruby"; // 루비 색상 클래스
-  } else {
-    levelName = "M"; // 잘못된 레벨 입력
-    bgColor = "bg-sky-500"; // 기본 색상
-  }
-
-  return {
-    levelName,
-    bgColor,
-  };
 }
